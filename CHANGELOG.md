@@ -4,6 +4,13 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.1.0] - 2026-07-20
+
+### Added
+- MCP OAuth support: `AsyncScrapeNestClient(access_token=...)` for first-party clients forwarding Keycloak tokens (ADR-MCP-001).
+- Custom proxy (BYO egress) for stealth-tier jobs: `job(proxy={server: "..."})`; chain through ScrapeNest's enforcing proxy (ADR-PROXY-001).
+- `JobEgress` model in job manifest forensics: track egress mode (`managed` | `custom`) and chained proxy details.
+
 ## [1.0.0] - 2026-07-15
 
 First public release.
@@ -35,4 +42,5 @@ First public release.
   `ScrapeNestConnectionError`.
 - `verify_webhook()` / `verify_signature()` for Svix-scheme webhook signature verification.
 
-[1.0.0]: https://github.com/scrapenest/scrapenest-py-sdk/releases/tag/v1.0.0
+[1.1.0]: https://github.com/ScrapeNest/scrapenest-py-sdk/releases/tag/v1.1.0
+[1.0.0]: https://github.com/ScrapeNest/scrapenest-py-sdk/releases/tag/v1.0.0
