@@ -152,6 +152,16 @@ class JobTiming:
 
 
 @dataclass(frozen=True)
+class JobEgress:
+    """Where the job's traffic exited: the ScrapeNest-managed pool, or a custom
+    proxy chained through ScrapeNest. Never includes credentials."""
+
+    mode: str  # "managed" | "custom"
+    chained: bool = True
+    proxy_server: str | None = None
+
+
+@dataclass(frozen=True)
 class JobManifest:
     """Forensics manifest of a terminal job. Source of truth for outcome and produced artifacts."""
 
@@ -169,6 +179,7 @@ class JobManifest:
     retry_count: int | None = None
     request: dict[str, object] = field(default_factory=dict)
     credits: JobCredits | None = None
+    egress: JobEgress | None = None
     artifacts: list[Artifact] = field(default_factory=list)
 
     @property

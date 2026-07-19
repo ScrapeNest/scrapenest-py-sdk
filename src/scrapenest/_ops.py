@@ -80,10 +80,29 @@ def _drop_none(values: dict[str, Any]) -> dict[str, Any]:
 # --- Jobs -----------------------------------------------------------------
 
 
+def _validate_proxy(body: dict[str, Any]) -> None:
+    """Fast client-side shape check for a custom proxy (BYO egress).
+
+    The server is authoritative (tier gate + SSRF screen); this only catches
+    obvious mistakes before a round-trip. Kept to shape, not policy.
+    """
+    if "proxy" not in body:
+        return
+    if body.get("job_type") != "stealth":
+        raise ValueError("proxy is only supported on the stealth job_type")
+    proxy = body["proxy"]
+    if not isinstance(proxy, dict):
+        raise ValueError("proxy must be a mapping containing a 'server'")
+    server = proxy.get("server")
+    if not isinstance(server, str) or not server.strip():
+        raise ValueError("proxy.server is required and must be a non-empty string")
+
+
 def create_job(kwargs: dict[str, Any]) -> Op[CreateJobResponse]:
     body = _drop_none(kwargs)
     if "job_type" not in body or "target_url" not in body:
         raise ValueError("create() requires job_type and target_url")
+    _validate_proxy(body)
     # Auto-attach an idempotency token so transparent retries never double-submit.
     body.setdefault("idempotency_token", uuid4().hex)
 

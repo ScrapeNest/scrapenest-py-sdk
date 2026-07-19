@@ -32,7 +32,8 @@ class ScrapeNestClient:
     def __init__(
         self,
         *,
-        api_key: str,
+        api_key: str | None = None,
+        access_token: str | None = None,
         base_url: str = _DEFAULT_BASE_URL,
         timeout: float = 30.0,
         max_retries: int = 2,
@@ -41,13 +42,25 @@ class ScrapeNestClient:
         transport: httpx.BaseTransport | None = None,
         download_transport: httpx.BaseTransport | None = None,
     ) -> None:
+        # Customers authenticate with `api_key` (X-API-Key) - the documented,
+        # default path. `access_token` (OIDC bearer) is an alternative for
+        # first-party clients that already hold a Keycloak token (e.g. the MCP
+        # server forwarding the caller's token); exactly one must be given.
+        if (api_key is None) == (access_token is None):
+            raise ValueError("provide exactly one of api_key or access_token")
         self.api_key = api_key
+        self.access_token = access_token
         self.base_url = base_url.rstrip("/")
         self._max_retries = max_retries
         self._backoff_factor = backoff_factor
 
+        auth_header = (
+            {"X-API-Key": api_key}
+            if api_key is not None
+            else {"Authorization": f"Bearer {access_token}"}
+        )
         headers = {
-            "X-API-Key": api_key,
+            **auth_header,
             "Content-Type": "application/json",
             "Accept": "application/json",
             "User-Agent": f"scrapenest-python/{__version__}",
