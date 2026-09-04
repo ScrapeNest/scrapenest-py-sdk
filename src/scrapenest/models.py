@@ -271,6 +271,51 @@ class MonitorChangeListResponse:
 
 
 @dataclass(frozen=True)
+class MonitorChangeDiff:
+    """The before/after unified diff for a detected change."""
+
+    change_id: str
+    format: str
+    diff: str
+
+
+@dataclass(frozen=True)
+class JobStatsBucket:
+    """Job counts for one UTC hour."""
+
+    start: datetime
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    running: int = 0
+    queued: int = 0
+
+
+@dataclass(frozen=True)
+class JobStatsTotals:
+    """Aggregates over the whole stats window."""
+
+    total: int = 0
+    succeeded: int = 0
+    failed: int = 0
+    running: int = 0
+    queued: int = 0
+    success_rate: float | None = None
+    avg_duration_seconds: float | None = None
+
+
+@dataclass(frozen=True)
+class JobStatsResponse:
+    """Hourly job throughput aggregation."""
+
+    from_: datetime
+    to: datetime
+    bucket_seconds: int
+    buckets: list[JobStatsBucket]
+    totals: JobStatsTotals
+
+
+@dataclass(frozen=True)
 class AuditLogEntry:
     """A single audit record for a sensitive action in the organization."""
 

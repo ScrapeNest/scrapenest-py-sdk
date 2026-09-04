@@ -27,7 +27,9 @@ from scrapenest.models import (
     CreateJobResponse,
     Job,
     JobListResponse,
+    JobStatsResponse,
     Monitor,
+    MonitorChangeDiff,
     MonitorChangeListResponse,
     MonitorListResponse,
     MonitorRunListResponse,
@@ -77,7 +79,6 @@ def _drop_none(values: dict[str, Any]) -> dict[str, Any]:
     return {k: v for k, v in values.items() if v is not None}
 
 
-# --- Jobs -----------------------------------------------------------------
 
 
 def _validate_proxy(body: dict[str, Any]) -> None:
@@ -155,7 +156,16 @@ def list_jobs(
     return Op("GET", "/v1/jobs", _body(_parsing.parse_job_list), params=params)
 
 
-# --- Artifacts ------------------------------------------------------------
+def get_job_stats(
+    *,
+    from_: str | None,
+    to: str | None,
+    job_type: str | None,
+) -> Op[JobStatsResponse]:
+    params = _drop_none({"from": from_, "to": to, "job_type": job_type})
+    return Op("GET", "/v1/jobs/stats", _body(_parsing.parse_job_stats), params=params)
+
+
 
 
 def get_artifact_download(artifact_id: str, ttl_seconds: int | None) -> Op[ArtifactDownload]:
@@ -168,7 +178,6 @@ def get_artifact_download(artifact_id: str, ttl_seconds: int | None) -> Op[Artif
     )
 
 
-# --- Monitors ------------------------------------------------------------
 
 
 def _monitor_body(
@@ -274,7 +283,16 @@ def list_monitor_changes(
     )
 
 
-# --- Audit logs -----------------------------------------------------------
+def get_monitor_change_diff(
+    monitor_id: str, change_id: str
+) -> Op[MonitorChangeDiff]:
+    return Op(
+        "GET",
+        f"/v1/monitors/{monitor_id}/changes/{change_id}/diff",
+        _body(_parsing.parse_monitor_change_diff),
+    )
+
+
 
 
 def list_audit_logs(
@@ -301,7 +319,6 @@ def list_audit_logs(
     )
 
 
-# --- API keys -------------------------------------------------------------
 
 
 def list_api_keys() -> Op[list[ApiKey]]:
@@ -359,7 +376,6 @@ def set_api_key_ip_allowlist(key_id: str, allowed_cidrs: list[str]) -> Op[ApiKey
     )
 
 
-# --- Webhook endpoints ----------------------------------------------------
 
 
 def _webhook_endpoint_body(
@@ -469,7 +485,6 @@ def list_webhook_attempts(
     )
 
 
-# --- Retention ------------------------------------------------------------
 
 
 def get_retention_policy() -> Op[RetentionPolicy]:
@@ -515,7 +530,6 @@ def release_retention_hold(hold_id: str, release_notes: str) -> Op[RetentionHold
     )
 
 
-# --- Org security ---------------------------------------------------------
 
 
 def get_org_ip_allowlist() -> Op[OrgIpAllowlist]:

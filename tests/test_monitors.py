@@ -149,7 +149,6 @@ async def test_async_monitors_mirror_sync() -> None:
         assert paused.id == "mon-1"
 
 
-# --- change detection (ADR-ORCH-003) --------------------------------------
 
 WATCHED_MONITOR = {
     **MONITOR,
@@ -246,3 +245,59 @@ def test_changes_route_and_parsing() -> None:
     assert chg.has_diff is True
     assert chg.notified_channels == ["webhook", "email"]
     assert chg.detected_at == datetime.fromisoformat("2026-07-07T01:00:00+00:00")
+
+
+
+DIFF_RESPONSE = {
+    "change_id": "chg-1",
+    "format": "unified",
+    "diff": "--- before\n+++ after\n@@ -1 +1 @@\n-old\n+new",
+}
+
+
+def test_change_diff_hits_correct_route() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=DIFF_RESPONSE)
+
+    client = sync_client(handler)
+    client.monitors.change_diff("mon-1", "chg-1")
+
+    assert seen[0].method == "GET"
+    assert seen[0].url.path == "/v1/monitors/mon-1/changes/chg-1/diff"
+
+
+def test_change_diff_parses_response() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=DIFF_RESPONSE)
+
+    client = sync_client(handler)
+    d = client.monitors.change_diff("mon-1", "chg-1")
+
+    assert d.change_id == "chg-1"
+    assert d.format == "unified"
+    assert "+new" in d.diff
+    assert "-old" in d.diff
+
+
+def test_change_diff_defaults_format_to_unified() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json={"change_id": "chg-2", "diff": "some diff"})
+
+    client = sync_client(handler)
+    d = client.monitors.change_diff("mon-1", "chg-2")
+
+    assert d.format == "unified"
+    assert d.diff == "some diff"
+
+
+async def test_async_change_diff() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=DIFF_RESPONSE)
+
+    async with async_client(handler) as client:
+        d = await client.monitors.change_diff("mon-1", "chg-1")
+        assert d.change_id == "chg-1"
+        assert d.format == "unified"

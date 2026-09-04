@@ -42,10 +42,6 @@ class AsyncScrapeNestClient:
         transport: httpx.AsyncBaseTransport | None = None,
         download_transport: httpx.AsyncBaseTransport | None = None,
     ) -> None:
-        # Customers authenticate with `api_key` (X-API-Key) - the documented,
-        # default path. `access_token` (OIDC bearer) is an alternative for
-        # first-party clients that already hold a Keycloak token (e.g. the MCP
-        # server forwarding the caller's token); exactly one must be given.
         if (api_key is None) == (access_token is None):
             raise ValueError("provide exactly one of api_key or access_token")
         self.api_key = api_key

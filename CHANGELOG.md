@@ -4,11 +4,17 @@ All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) and this project adheres to
 [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-09-04
+
+### Added
+- Job stats endpoint: `client.jobs.stats(from_=..., to=..., job_type=...)` returns hourly throughput buckets with `JobStatsResponse`, `JobStatsBucket`, and `JobStatsTotals` models.
+- Monitor change diff endpoint: `client.monitors.change_diff(monitor_id, change_id)` returns the unified diff for a detected change via `MonitorChangeDiff`.
+
 ## [1.1.0] - 2026-07-20
 
 ### Added
-- MCP OAuth support: `AsyncScrapeNestClient(access_token=...)` for first-party clients forwarding Keycloak tokens (ADR-MCP-001).
-- Custom proxy (BYO egress) for stealth-tier jobs: `job(proxy={server: "..."})`; chain through ScrapeNest's enforcing proxy (ADR-PROXY-001).
+- MCP OAuth support: `AsyncScrapeNestClient(access_token=...)` for clients authenticating with an OIDC bearer token.
+- Custom proxy (BYO egress) for stealth-tier jobs: `job(proxy={server: "..."})`.
 - `JobEgress` model in job manifest forensics: track egress mode (`managed` | `custom`) and chained proxy details.
 
 ## [1.0.0] - 2026-07-15
@@ -42,5 +48,6 @@ First public release.
   `ScrapeNestConnectionError`.
 - `verify_webhook()` / `verify_signature()` for Svix-scheme webhook signature verification.
 
+[1.2.0]: https://github.com/ScrapeNest/scrapenest-py-sdk/releases/tag/v1.2.0
 [1.1.0]: https://github.com/ScrapeNest/scrapenest-py-sdk/releases/tag/v1.1.0
 [1.0.0]: https://github.com/ScrapeNest/scrapenest-py-sdk/releases/tag/v1.0.0

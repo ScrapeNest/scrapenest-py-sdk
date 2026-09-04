@@ -11,6 +11,7 @@ from scrapenest.models import (
     Job,
     JobListResponse,
     JobManifest,
+    JobStatsResponse,
     JobSummary,
 )
 from scrapenest.types import (
@@ -73,6 +74,17 @@ class JobsResource:
                 limit=limit,
                 offset=offset,
             )
+        )
+
+    def stats(
+        self,
+        *,
+        from_: str | None = None,
+        to: str | None = None,
+        job_type: str | None = None,
+    ) -> JobStatsResponse:
+        return self._client._execute(
+            _ops.get_job_stats(from_=from_, to=to, job_type=job_type)
         )
 
     def iter(
@@ -167,6 +179,17 @@ class AsyncJobsResource:
                 limit=limit,
                 offset=offset,
             )
+        )
+
+    async def stats(
+        self,
+        *,
+        from_: str | None = None,
+        to: str | None = None,
+        job_type: str | None = None,
+    ) -> JobStatsResponse:
+        return await self._client._execute(
+            _ops.get_job_stats(from_=from_, to=to, job_type=job_type)
         )
 
     async def iter(

@@ -55,7 +55,6 @@ OsName = Literal["windows", "macos", "linux"]
 BrowserExtension = Literal["ublock", "isdcac"]
 
 
-# --- Extraction hooks ---------------------------------------------------------
 
 class CssExtractionHook(TypedDict):
     hook_id: str
@@ -91,7 +90,6 @@ class JobExtraction(TypedDict):
     hooks: list[ExtractionHook]
 
 
-# --- Browser actions ----------------------------------------------------------
 
 class ClickAction(TypedDict):
     action: Literal["click"]
@@ -146,7 +144,6 @@ JobAction = (
 )
 
 
-# --- Shared job options -------------------------------------------------------
 
 class JobArtifactOptions(TypedDict, total=False):
     include_html: bool
@@ -180,7 +177,6 @@ class JobProxy(TypedDict):
     password: NotRequired[str | None]
 
 
-# --- Per-tier create bodies (used by jobs.create overloads) -------------------
 
 class _JobCommonFields(TypedDict):
     target_url: str

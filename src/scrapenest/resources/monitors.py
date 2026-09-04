@@ -7,6 +7,7 @@ from scrapenest import _ops
 from scrapenest.models import (
     Monitor,
     MonitorChange,
+    MonitorChangeDiff,
     MonitorChangeListResponse,
     MonitorListResponse,
     MonitorRun,
@@ -140,6 +141,11 @@ class MonitorsResource:
             if not page.items or offset >= page.total:
                 break
 
+    def change_diff(self, monitor_id: str, change_id: str) -> MonitorChangeDiff:
+        return self._client._execute(
+            _ops.get_monitor_change_diff(monitor_id, change_id)
+        )
+
 
 class AsyncMonitorsResource:
     def __init__(self, client: AsyncScrapeNestClient) -> None:
@@ -254,3 +260,8 @@ class AsyncMonitorsResource:
             offset += len(page.items)
             if not page.items or offset >= page.total:
                 break
+
+    async def change_diff(self, monitor_id: str, change_id: str) -> MonitorChangeDiff:
+        return await self._client._execute(
+            _ops.get_monitor_change_diff(monitor_id, change_id)
+        )

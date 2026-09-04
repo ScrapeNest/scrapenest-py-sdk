@@ -37,10 +37,14 @@ from scrapenest.models import (
     JobListResponse,
     JobManifest,
     JobResponseInfo,
+    JobStatsBucket,
+    JobStatsResponse,
+    JobStatsTotals,
     JobSummary,
     JobTiming,
     Monitor,
     MonitorChange,
+    MonitorChangeDiff,
     MonitorChangeListResponse,
     MonitorListResponse,
     MonitorRun,
@@ -65,10 +69,8 @@ from scrapenest.webhooks import verify_signature, verify_webhook
 
 __all__ = [
     "__version__",
-    # Clients
     "ScrapeNestClient",
     "AsyncScrapeNestClient",
-    # Jobs and artifacts
     "Artifact",
     "ArtifactDownload",
     "AuditLogEntry",
@@ -83,21 +85,22 @@ __all__ = [
     "JobResponseInfo",
     "JobSummary",
     "JobTiming",
+    "JobStatsBucket",
+    "JobStatsResponse",
+    "JobStatsTotals",
     "ScrapeResult",
-    # Monitors
     "Monitor",
     "MonitorChange",
+    "MonitorChangeDiff",
     "MonitorChangeListResponse",
     "MonitorListResponse",
     "MonitorRun",
     "MonitorRunListResponse",
-    # API keys
     "ApiKey",
     "ApiKeyCreated",
     "ApiKeyIpAllowlist",
     "ApiKeyRevocation",
     "ApiKeyRotation",
-    # Webhook endpoints
     "WebhookEndpoint",
     "WebhookEndpointCreated",
     "WebhookEndpointStatusChange",
@@ -107,16 +110,13 @@ __all__ = [
     "WebhookMessageAttemptPage",
     "WebhookMessagePage",
     "WebhookSecretRotation",
-    # Retention and org security
     "OrgIpAllowlist",
     "RetentionHold",
     "RetentionHoldList",
     "RetentionHoldRelease",
     "RetentionPolicy",
-    # Webhook verification
     "verify_webhook",
     "verify_signature",
-    # Exceptions
     "ScrapeNestError",
     "ScrapeNestAPIError",
     "ScrapeNestConnectionError",

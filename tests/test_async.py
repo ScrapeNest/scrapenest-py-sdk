@@ -117,3 +117,34 @@ async def test_async_artifact_download() -> None:
     async with make_client(api_handler, download_handler) as client:
         text = await client.artifacts.download_text("a1")
         assert text == "<html>ok</html>"
+
+
+@pytest.mark.asyncio
+async def test_async_stats() -> None:
+    stats_response = {
+        "from": "2026-09-03T00:00:00+00:00",
+        "to": "2026-09-04T00:00:00+00:00",
+        "bucket_seconds": 3600,
+        "buckets": [
+            {
+                "start": "2026-09-03T10:00:00+00:00",
+                "total": 7, "succeeded": 6, "failed": 1,
+                "running": 0, "queued": 0,
+            },
+        ],
+        "totals": {
+            "total": 7, "succeeded": 6, "failed": 1,
+            "running": 0, "queued": 0,
+            "success_rate": 0.857, "avg_duration_seconds": 2.1,
+        },
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        assert request.url.path == "/v1/jobs/stats"
+        return httpx.Response(200, json=stats_response)
+
+    async with make_client(handler) as client:
+        s = await client.jobs.stats(from_="2026-09-03T00:00:00Z")
+        assert s.totals.total == 7
+        assert s.totals.success_rate == 0.857
+        assert len(s.buckets) == 1

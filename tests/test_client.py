@@ -267,3 +267,156 @@ def test_scrape_timeout_keeps_job_id() -> None:
         client.scrape(job_type="light", target_url="https://example.com", timeout=1)
 
     assert exc.value.job_id == "job-1"
+
+
+
+STATS_RESPONSE = {
+    "from": "2026-09-03T00:00:00+00:00",
+    "to": "2026-09-04T00:00:00+00:00",
+    "bucket_seconds": 3600,
+    "buckets": [
+        {
+            "start": "2026-09-03T10:00:00+00:00",
+            "total": 12,
+            "succeeded": 10,
+            "failed": 2,
+            "running": 0,
+            "queued": 0,
+        },
+        {
+            "start": "2026-09-03T11:00:00+00:00",
+            "total": 5,
+            "succeeded": 5,
+            "failed": 0,
+            "running": 0,
+            "queued": 0,
+        },
+    ],
+    "totals": {
+        "total": 17,
+        "succeeded": 15,
+        "failed": 2,
+        "running": 0,
+        "queued": 0,
+        "success_rate": 0.882,
+        "avg_duration_seconds": 3.4,
+    },
+}
+
+
+def test_stats_hits_correct_route() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    client.jobs.stats()
+
+    assert seen[0].method == "GET"
+    assert seen[0].url.path == "/v1/jobs/stats"
+
+
+def test_stats_passes_date_params() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    client.jobs.stats(from_="2026-09-03T00:00:00Z", to="2026-09-04T00:00:00Z")
+
+    assert seen[0].url.params["from"] == "2026-09-03T00:00:00Z"
+    assert seen[0].url.params["to"] == "2026-09-04T00:00:00Z"
+
+
+def test_stats_omits_none_params() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    client.jobs.stats()
+
+    assert "from" not in seen[0].url.params
+    assert "to" not in seen[0].url.params
+
+
+def test_stats_parses_totals() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    s = client.jobs.stats()
+
+    assert s.totals.total == 17
+    assert s.totals.succeeded == 15
+    assert s.totals.failed == 2
+    assert s.totals.success_rate == 0.882
+    assert s.totals.avg_duration_seconds == 3.4
+
+
+def test_stats_parses_buckets() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    s = client.jobs.stats()
+
+    assert len(s.buckets) == 2
+    assert s.buckets[0].total == 12
+    assert s.buckets[0].succeeded == 10
+    assert s.buckets[0].failed == 2
+    assert s.buckets[1].total == 5
+    assert s.bucket_seconds == 3600
+
+
+def test_stats_parses_timestamps() -> None:
+    from datetime import datetime
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    s = client.jobs.stats()
+
+    assert s.from_ == datetime.fromisoformat("2026-09-03T00:00:00+00:00")
+    assert s.to == datetime.fromisoformat("2026-09-04T00:00:00+00:00")
+    assert s.buckets[0].start == datetime.fromisoformat("2026-09-03T10:00:00+00:00")
+
+
+def test_stats_passes_job_type_filter() -> None:
+    seen: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        seen.append(request)
+        return httpx.Response(200, json=STATS_RESPONSE)
+
+    client = make_client(handler)
+    client.jobs.stats(job_type="stealth")
+
+    assert seen[0].url.params["job_type"] == "stealth"
+
+
+def test_stats_handles_none_rates() -> None:
+    data = {
+        **STATS_RESPONSE,
+        "totals": {
+            **STATS_RESPONSE["totals"],
+            "success_rate": None,
+            "avg_duration_seconds": None,
+        },
+    }
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        return httpx.Response(200, json=data)
+
+    client = make_client(handler)
+    s = client.jobs.stats()
+
+    assert s.totals.success_rate is None
+    assert s.totals.avg_duration_seconds is None

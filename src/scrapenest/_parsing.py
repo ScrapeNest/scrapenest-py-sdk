@@ -26,10 +26,14 @@ from scrapenest.models import (
     JobListResponse,
     JobManifest,
     JobResponseInfo,
+    JobStatsBucket,
+    JobStatsResponse,
+    JobStatsTotals,
     JobSummary,
     JobTiming,
     Monitor,
     MonitorChange,
+    MonitorChangeDiff,
     MonitorChangeListResponse,
     MonitorListResponse,
     MonitorRun,
@@ -126,6 +130,38 @@ def parse_job_list(data: dict[str, Any]) -> JobListResponse:
         total=int(data.get("total", 0)),
         limit=int(data.get("limit", 0)),
         offset=int(data.get("offset", 0)),
+    )
+
+
+def parse_job_stats_bucket(data: dict[str, Any]) -> JobStatsBucket:
+    return JobStatsBucket(
+        start=_require_datetime(data.get("start"), "JobStatsBucket"),
+        total=int(data.get("total", 0)),
+        succeeded=int(data.get("succeeded", 0)),
+        failed=int(data.get("failed", 0)),
+        running=int(data.get("running", 0)),
+        queued=int(data.get("queued", 0)),
+    )
+
+
+def parse_job_stats(data: dict[str, Any]) -> JobStatsResponse:
+    totals_raw = data.get("totals", {})
+    sr = totals_raw.get("success_rate")
+    ad = totals_raw.get("avg_duration_seconds")
+    return JobStatsResponse(
+        from_=_require_datetime(data.get("from"), "JobStats"),
+        to=_require_datetime(data.get("to"), "JobStats"),
+        bucket_seconds=int(data.get("bucket_seconds", 3600)),
+        buckets=[parse_job_stats_bucket(b) for b in data.get("buckets", [])],
+        totals=JobStatsTotals(
+            total=int(totals_raw.get("total", 0)),
+            succeeded=int(totals_raw.get("succeeded", 0)),
+            failed=int(totals_raw.get("failed", 0)),
+            running=int(totals_raw.get("running", 0)),
+            queued=int(totals_raw.get("queued", 0)),
+            success_rate=float(sr) if sr is not None else None,
+            avg_duration_seconds=float(ad) if ad is not None else None,
+        ),
     )
 
 
@@ -286,6 +322,14 @@ def parse_monitor_change_list(data: dict[str, Any]) -> MonitorChangeListResponse
         total=int(data.get("total", 0)),
         limit=int(data.get("limit", 0)),
         offset=int(data.get("offset", 0)),
+    )
+
+
+def parse_monitor_change_diff(data: dict[str, Any]) -> MonitorChangeDiff:
+    return MonitorChangeDiff(
+        change_id=data["change_id"],
+        format=data.get("format", "unified"),
+        diff=data.get("diff", ""),
     )
 
 
