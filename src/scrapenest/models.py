@@ -578,3 +578,96 @@ class OrgIpAllowlist:
 
     org_id: str
     allowed_cidrs: list[str]
+
+
+# --- Recipes (beta) -----------------------------------------------------------
+# Ready-made scrapers for well-known sites returning JSON validated against a
+# versioned output schema. `contract` is the schema version you code against;
+# `impl` changes when ScrapeNest fixes the scraper, never the schema.
+
+RECIPE_BILLED_OUTCOMES = ("ok", "ok_empty", "not_found")
+
+
+@dataclass(frozen=True)
+class RecipeIdentity:
+    slug: str
+    contract: int
+    impl: int
+
+
+@dataclass(frozen=True)
+class RecipeSummary:
+    slug: str
+    title: str
+    description: str
+    category: str
+    status: str
+    available: bool
+    health: str
+    billing_unit: str
+    credit_multiplier: float
+    contracts: list[int] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class RecipeListResponse:
+    items: list[RecipeSummary]
+    total: int
+
+
+@dataclass(frozen=True)
+class RecipeContract:
+    contract: int
+    input_schema: dict[str, Any]
+    output_schema: dict[str, Any]
+    example_input: dict[str, Any] | None = None
+    example_output: dict[str, Any] | None = None
+    deprecated_at: str | None = None
+    sunset_at: str | None = None
+    engine: str | None = None
+    credits_per_unit: int | None = None
+
+
+@dataclass(frozen=True)
+class Recipe:
+    slug: str
+    title: str
+    description: str
+    category: str
+    status: str
+    available: bool
+    health: str
+    billing_unit: str
+    credit_multiplier: float
+    contracts: list[RecipeContract] = field(default_factory=list)
+
+
+@dataclass(frozen=True)
+class RecipeRun:
+    """A queued recipe run: an ordinary job carrying the recipe identity."""
+
+    job_id: str
+    status: str
+    recipe: RecipeIdentity
+    created_at: datetime | None = None
+
+
+@dataclass(frozen=True)
+class RecipeResult:
+    """The validated structured output of a recipe job.
+
+    `output` is None unless the outcome is ``ok`` or ``ok_empty``; the outcome
+    says why (``not_found``, ``blocked``, ``rate_limited``, ...).
+    """
+
+    job_id: str
+    status: str
+    recipe: RecipeIdentity
+    outcome: str | None
+    captured_at: datetime | None = None
+    output: dict[str, Any] | None = None
+
+    @property
+    def billed(self) -> bool:
+        """Only definitive answers are billed: ok, ok_empty, not_found."""
+        return self.outcome in RECIPE_BILLED_OUTCOMES

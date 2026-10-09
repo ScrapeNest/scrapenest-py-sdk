@@ -34,6 +34,10 @@ from scrapenest.models import (
     MonitorListResponse,
     MonitorRunListResponse,
     OrgIpAllowlist,
+    Recipe,
+    RecipeListResponse,
+    RecipeResult,
+    RecipeRun,
     RetentionHold,
     RetentionHoldList,
     RetentionHoldRelease,
@@ -543,3 +547,25 @@ def set_org_ip_allowlist(allowed_cidrs: list[str]) -> Op[OrgIpAllowlist]:
         _body(_parsing.parse_org_ip_allowlist),
         json={"allowed_cidrs": allowed_cidrs},
     )
+
+
+# --- Recipes ------------------------------------------------------------------
+
+
+def list_recipes() -> Op[RecipeListResponse]:
+    return Op("GET", "/v1/recipes", _body(_parsing.parse_recipe_list))
+
+
+def get_recipe(slug: str) -> Op[Recipe]:
+    return Op("GET", f"/v1/recipes/{slug}", _body(_parsing.parse_recipe))
+
+
+def run_recipe(
+    slug: str, input: dict[str, Any], contract: int | None, idempotency_token: str | None
+) -> Op[RecipeRun]:
+    body = _drop_none({"input": input, "contract": contract, "idempotency_token": idempotency_token})
+    return Op("POST", f"/v1/recipes/{slug}/runs", _body(_parsing.parse_recipe_run), json=body)
+
+
+def get_recipe_result(job_id: str) -> Op[RecipeResult]:
+    return Op("GET", f"/v1/jobs/{job_id}/result", _body(_parsing.parse_recipe_result))

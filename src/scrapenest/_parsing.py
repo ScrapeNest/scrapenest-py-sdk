@@ -39,6 +39,13 @@ from scrapenest.models import (
     MonitorRun,
     MonitorRunListResponse,
     OrgIpAllowlist,
+    Recipe,
+    RecipeContract,
+    RecipeIdentity,
+    RecipeListResponse,
+    RecipeResult,
+    RecipeRun,
+    RecipeSummary,
     RetentionHold,
     RetentionHoldList,
     RetentionHoldRelease,
@@ -583,4 +590,88 @@ def parse_org_ip_allowlist(data: dict[str, Any]) -> OrgIpAllowlist:
     return OrgIpAllowlist(
         org_id=data.get("org_id", ""),
         allowed_cidrs=_str_list(data.get("allowed_cidrs")),
+    )
+
+
+# --- Recipes ------------------------------------------------------------------
+
+
+def parse_recipe_identity(data: dict[str, Any]) -> RecipeIdentity:
+    return RecipeIdentity(
+        slug=data.get("slug", ""),
+        contract=int(data.get("contract", 0)),
+        impl=int(data.get("impl", 0)),
+    )
+
+
+def parse_recipe_summary(data: dict[str, Any]) -> RecipeSummary:
+    return RecipeSummary(
+        slug=data["slug"],
+        title=data.get("title", ""),
+        description=data.get("description", ""),
+        category=data.get("category", ""),
+        status=data.get("status", ""),
+        available=bool(data.get("available", False)),
+        health=data.get("health", "unknown"),
+        billing_unit=data.get("billing_unit", "run"),
+        credit_multiplier=float(data.get("credit_multiplier", 1)),
+        contracts=[int(c) for c in data.get("contracts", [])],
+    )
+
+
+def parse_recipe_list(data: dict[str, Any]) -> RecipeListResponse:
+    return RecipeListResponse(
+        items=[parse_recipe_summary(item) for item in data.get("items", [])],
+        total=int(data.get("total", 0)),
+    )
+
+
+def parse_recipe_contract(data: dict[str, Any]) -> RecipeContract:
+    return RecipeContract(
+        contract=int(data["contract"]),
+        input_schema=data.get("input_schema") or {},
+        output_schema=data.get("output_schema") or {},
+        example_input=data.get("example_input"),
+        example_output=data.get("example_output"),
+        deprecated_at=data.get("deprecated_at"),
+        sunset_at=data.get("sunset_at"),
+        engine=data.get("engine"),
+        credits_per_unit=data.get("credits_per_unit"),
+    )
+
+
+def parse_recipe(data: dict[str, Any]) -> Recipe:
+    summary = parse_recipe_summary({**data, "contracts": []})
+    return Recipe(
+        slug=summary.slug,
+        title=summary.title,
+        description=summary.description,
+        category=summary.category,
+        status=summary.status,
+        available=summary.available,
+        health=summary.health,
+        billing_unit=summary.billing_unit,
+        credit_multiplier=summary.credit_multiplier,
+        contracts=[parse_recipe_contract(c) for c in data.get("contracts", [])],
+    )
+
+
+def parse_recipe_run(data: dict[str, Any]) -> RecipeRun:
+    return RecipeRun(
+        job_id=data["job_id"],
+        status=data.get("status", "queued"),
+        recipe=parse_recipe_identity(data.get("recipe") or {}),
+        created_at=parse_datetime(data.get("created_at")),
+    )
+
+
+def parse_recipe_result(data: dict[str, Any]) -> RecipeResult:
+    recipe = data.get("recipe") or {}
+    return RecipeResult(
+        job_id=data["job_id"],
+        status=data.get("status", ""),
+        recipe=parse_recipe_identity(recipe),
+        outcome=recipe.get("outcome"),
+        captured_at=parse_datetime(data.get("captured_at")),
+        output=data.get("output"),
     )

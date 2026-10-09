@@ -144,6 +144,34 @@ for change in client.monitors.iter_changes(monitor.id):
 
 `update()` replaces the whole monitor definition - pass every field you want to keep.
 
+## Recipes (beta)
+
+Recipes are ready-made scrapers for well-known sites (Google results, GitHub
+issues, ...) that return JSON validated against a versioned output schema.
+`contract` is the schema version you code against; `impl` changes when
+ScrapeNest fixes the scraper, never the schema. Only definitive answers are
+billed: outcome `ok`, `ok_empty` or `not_found`.
+
+```python
+for recipe in client.recipes.list().items:
+    print(recipe.slug, recipe.status, recipe.health)
+
+contract = client.recipes.get("github-issues").contracts[0]
+print(contract.input_schema)  # JSON Schema of the input
+
+result = client.recipes.run_and_wait("github-issues", {"owner": "cli", "repo": "cli"})
+if result.outcome == "ok":
+    for issue in result.output["issues"]:
+        print(issue["number"], issue["title"])
+
+# Or queue now and collect later (job.completed webhooks carry the result too):
+run = client.recipes.run("google-serp", {"q": "best coffee grinder"})
+result = client.recipes.result(run.job_id)
+```
+
+An input that does not match the contract raises `ValidationError` with field
+`details`.
+
 ## Webhook endpoints
 
 Register an HTTPS endpoint once and ScrapeNest pushes job events to it - no polling:

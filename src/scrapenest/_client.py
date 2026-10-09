@@ -17,6 +17,7 @@ from scrapenest.resources.audit_logs import AuditLogsResource
 from scrapenest.resources.jobs import JobsResource
 from scrapenest.resources.monitors import MonitorsResource
 from scrapenest.resources.org import OrgResource
+from scrapenest.resources.recipes import RecipesResource
 from scrapenest.resources.retention import RetentionResource
 from scrapenest.resources.webhook_endpoints import WebhookEndpointsResource
 
@@ -77,6 +78,7 @@ class ScrapeNestClient:
         self.jobs = JobsResource(self)
         self.artifacts = ArtifactsResource(self)
         self.monitors = MonitorsResource(self)
+        self.recipes = RecipesResource(self)
         self.webhook_endpoints = WebhookEndpointsResource(self)
         self.api_keys = ApiKeysResource(self)
         self.retention = RetentionResource(self)

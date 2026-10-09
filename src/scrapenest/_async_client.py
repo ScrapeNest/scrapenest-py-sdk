@@ -17,6 +17,7 @@ from scrapenest.resources.audit_logs import AsyncAuditLogsResource
 from scrapenest.resources.jobs import AsyncJobsResource
 from scrapenest.resources.monitors import AsyncMonitorsResource
 from scrapenest.resources.org import AsyncOrgResource
+from scrapenest.resources.recipes import AsyncRecipesResource
 from scrapenest.resources.retention import AsyncRetentionResource
 from scrapenest.resources.webhook_endpoints import AsyncWebhookEndpointsResource
 
@@ -77,6 +78,7 @@ class AsyncScrapeNestClient:
         self.jobs = AsyncJobsResource(self)
         self.artifacts = AsyncArtifactsResource(self)
         self.monitors = AsyncMonitorsResource(self)
+        self.recipes = AsyncRecipesResource(self)
         self.webhook_endpoints = AsyncWebhookEndpointsResource(self)
         self.api_keys = AsyncApiKeysResource(self)
         self.retention = AsyncRetentionResource(self)
